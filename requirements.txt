@@ -1,0 +1,3 @@
+pandas-profiling
+psycopg2-binary
+pydantic-settings
