@@ -66,10 +66,24 @@ def show_parquet_head(**context):
         print(f"Error in show head: {e}")
         raise
 def load_to_postgres(**context):
-    df = pd.read_csv(PATH)
+    df = pd.read_parquet(PARQUET_PATH)
+    df['fecha_carga'] = datetime.now()
     engine = create_engine(POSTGRES_CONN)
-    df.to_sql('titanic', engine, if_exists='replace', index=False)
-    print('Datos cargados en la tabla titanic de PostgreSQL')
+    # Leer datos existentes
+    try:
+        existing = pd.read_sql('SELECT * FROM titanic', engine)
+        # Suponiendo que hay una columna 'PassengerId' como clave única
+        new_rows = df[~df['PassengerId'].isin(existing['PassengerId'])]
+        if not new_rows.empty:
+            new_rows['fecha_carga'] = datetime.now()
+            new_rows.to_sql('titanic', engine, if_exists='append', index=False)
+            print(f'Se agregaron {len(new_rows)} filas nuevas a la tabla titanic.')
+        else:
+            print('No hay filas nuevas para agregar.')
+    except Exception:
+        # Si la tabla no existe, crea y carga todo
+        df.to_sql('titanic', engine, if_exists='replace', index=False)
+        print('Tabla creada y datos cargados en la tabla titanic de PostgreSQL')
 
 with DAG(
     dag_id='etl_titanic_parquet',
