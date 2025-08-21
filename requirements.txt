@@ -1,3 +1,7 @@
 pandas-profiling
 psycopg2-binary
 pydantic-settings
+html5lib
+beautifulsoup4
+pandas
+openpyxl
